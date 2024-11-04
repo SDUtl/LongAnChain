@@ -1,0 +1,31 @@
+chain_client:
+  chain_id: RangonTestChain
+  org_id: DavexOrg1
+  user_key_file_path: src/main/resources/crypto-config/DavexOrg1/user/davexuser1/davexuser1.tls.key
+  user_crt_file_path: src/main/resources/crypto-config/DavexOrg1/user/davexuser1/davexuser1.tls.crt
+  user_sign_key_file_path: src/main/resources/crypto-config/DavexOrg1/user/davexuser1/davexuser1.sign.key
+  user_sign_crt_file_path: src/main/resources/crypto-config/DavexOrg1/user/davexuser1/davexuser1.sign.crt
+  retry_limit: 10
+  retry_interval: 500
+  nodes:
+  - node_addr: 10.176.34.172:19301
+    conn_cnt: 10
+    enable_tls: true
+    trust_root_paths:
+    - src/main/resources/crypto-config/DavexOrg1/ca
+    tls_host_name: chainmaker.org
+  archive:
+    type: mysql
+    dest: root:123456:localhost:3306
+    secret_key: xxx
+  rpc_client:
+    max_receive_message_size: 100
+    # max_send_message_size: 100
+  pkcs11:
+    enabled: false
+    # type: ""
+    # library: /usr/local/lib64/pkcs11/libupkcs11.so
+    # label: HSM
+    # password: "11111111"
+    # session_cache_size: 10
+    # hash: SHA256
