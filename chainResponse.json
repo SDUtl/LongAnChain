@@ -1,0 +1,14 @@
+[
+  {
+    "success": true,
+    "message": "success",
+    "data": {
+      "cert_id": "9247c912-003b-4e39-b781-cfa07050a3ac",
+      "owner": "f63563d92449aed05fe71655291d9bced070df67",
+      "cert_hash": "OWE5NTExM2UtZTA3Ny00ZGE2LWE5ZWEtYWJjYTNiNDZiZGZl",
+      "is_revoked": false,
+      "create_time": 1730896977109,
+      "update_time": 1730896977109
+    }
+  }
+]

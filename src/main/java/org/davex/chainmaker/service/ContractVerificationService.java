@@ -5,10 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.chainmaker.pb.common.ResultOuterClass;
 import org.chainmaker.sdk.ChainClient;
 import org.davex.chainmaker.controller.dto.request.verificationContract.*;
+import org.davex.chainmaker.util.PemUtil;
+import org.davex.chainmaker.util.PersistentKeyUtils;
+import org.davex.chainmaker.util.PublicKeyEncodingExample;
+import org.davex.chainmaker.util.SignatureDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -118,7 +125,7 @@ public class ContractVerificationService {
     public ResultOuterClass.TxResponse getTraceBlock(ContractVerificationGetTraceBlockRequest request) {
         try {
             Map<String, byte[]> params = new HashMap<>();
-            params.put("trace_block_id", request.getTraceBlockID().getBytes());
+            params.put("trace_id", request.getTraceBlockID().getBytes());
 
             return chainClient.queryContract(
                     contractName,
@@ -145,7 +152,23 @@ public class ContractVerificationService {
             params.put("file_description", request.getFileDescription().getBytes());
             params.put("sharing_setting_hash", request.getSharingSettingHash().getBytes());
             params.put("certificate_id", request.getCertificateID().getBytes());
-            params.put("request_signature", request.getRequestSignature());
+
+            // 签名bytes 需要按照 base64进行解析
+            byte[] signatureBytes = SignatureDecoder.decodeBase64String(request.getRequestSignature());
+            params.put("request_signature", signatureBytes);
+
+            // 公钥按照字节方式进行上传
+            byte[] authorizer = request.getPublicKey().getBytes();
+            params.put("authorizer", authorizer);
+
+            // Msg 哈希 按照字节方式上传
+            byte[] msgHash = request.getRequestMsgHash().getBytes(StandardCharsets.UTF_8);
+            params.put("request_msg_hash", msgHash);
+
+            boolean verified = PublicKeyEncodingExample.verifySignature(request.getRequestMsgHash(), request.getRequestSignature(), request.getPublicKey());
+            if (!verified){
+                throw new RuntimeException("签名验证失败");
+            }
 
             return chainClient.invokeContract(
                     contractName,
@@ -164,16 +187,30 @@ public class ContractVerificationService {
     /**
      * 提交验证响应
      */
-    public ResultOuterClass.TxResponse submitVerificationResponse(ContractVerificationSubmitResponseRequest request) {
+    public ResultOuterClass.TxResponse submitVerificationResponse(ContractVerificationSubmitResponseRequest response) {
         try {
             Map<String, byte[]> params = new HashMap<>();
-            params.put("response_id", request.getResponseID().getBytes());
-            params.put("request_id", request.getRequestID().getBytes());
-            params.put("time_stamp", request.getTimeStamp().getBytes());
-            params.put("certificate_id", request.getCertificateID().getBytes());
-            params.put("response_signature", request.getResponseSignature());
-            params.put("request_hash", request.getRequestHash());
+            params.put("response_id", response.getResponseID().getBytes());
+            params.put("request_id", response.getRequestID().getBytes());
+            params.put("time_stamp", response.getTimeStamp().getBytes());
+            params.put("certificate_id", response.getCertificateID().getBytes());
+            params.put("request_hash", response.getRequestHash().getBytes());
 
+            // 签名bytes 需要按照 base64进行解析
+            byte[] signatureBytes = SignatureDecoder.decodeBase64String(response.getResponseSignature());
+            params.put("response_signature", signatureBytes);
+
+            byte[] authorizer = Base64.getDecoder().decode(response.getPublicKey());
+            params.put("authorizer", authorizer);
+
+            // Msg 哈希按照字节方式上传
+            byte[] msgHash = response.getResponseMsgHash().getBytes(StandardCharsets.UTF_8);
+            params.put("response_msg_hash", msgHash);
+
+            boolean verified = PublicKeyEncodingExample.verifySignature(response.getResponseMsgHash(), response.getResponseSignature(), response.getPublicKey());
+            if (!verified){
+                throw new RuntimeException("签名验证失败");
+            }
             return chainClient.invokeContract(
                     contractName,
                     invokeMethodSubmitResponse,
@@ -203,8 +240,8 @@ public class ContractVerificationService {
                     invokeMethodVerifyAndGenerateTraceability,
                     null,
                     params,
-                    1000,
-                    1000
+                    10000,
+                    10000
             );
         } catch (Exception e) {
             log.error("验证并生成追溯信息失败", e);
