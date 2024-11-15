@@ -26,6 +26,7 @@ public class ContractVerificationSubmitRequest {
     public static ContractVerificationSubmitRequest generateRequest(String fileDescription, PrivateKey privateKey) throws Exception {
         ContractVerificationSubmitRequest request = new ContractVerificationSubmitRequest();
 
+
         // 生成唯一的 requestID 和 certificateID
         request.setRequestID(UUID.randomUUID().toString());
         request.setCertificateID(UUID.randomUUID().toString());

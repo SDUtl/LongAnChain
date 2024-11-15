@@ -1,5 +1,6 @@
 package org.davex.chainmaker.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.davex.chainmaker.controller.dto.request.verificationContract.ContractVerificationSubmitRequest;
 import org.davex.chainmaker.controller.dto.request.verificationContract.ContractVerificationSubmitResponseRequest;
 
@@ -56,6 +57,11 @@ public class GenerateExample {
         }else {
             System.out.println("Signature not verified");
         }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(request);
+        System.out.println(json);
+
         //写入output.json 文件
         String filePath = "output.json";
         try {
